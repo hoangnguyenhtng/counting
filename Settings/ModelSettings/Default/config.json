@@ -1,0 +1,75 @@
+{
+    "name_model": "Default",
+    "shapes": {
+        "1": [
+            128.7441406250001,
+            72.9980982730263,
+            1740.5460115131546,
+            574.8143092105277
+        ]
+    },
+    "model_ai": {
+        "model_name": "digif-check-2.pt",
+        "conf": 0.7,
+        "iou": 0.55,
+        "max_det": 100,
+        "agnostic_nms": false
+    },
+    "hardware": {
+        "server": {
+            "ip": "127.0.0.1",
+            "port": 5000
+        },
+        "camera": {
+            "id": "",
+            "feature": "",
+            "name": "HIK",
+            "delay": 1000
+        },
+        "lighting": {
+            "comport": "COM5",
+            "baudrate": 19200,
+            "channel_value_0": 50,
+            "channel_value_1": 50,
+            "channel_value_2": 50,
+            "channel_value_3": 50,
+            "controller": "DCPController",
+            "delay": 200
+        },
+        "system": {
+            "log_dir": "Log_Vision/LogImage",
+            "log_size": 61440.0,
+            "image_retention": {
+                "enabled": true,
+                "max_size_gb": 60.0,
+                "cleanup_start_gb": 54.0,
+                "active_cleanup_start_gb": 58.0,
+                "cleanup_target_gb": 48.0,
+                "resume_saving_below_gb": 54.0,
+                "idle_after_minutes": 30.0,
+                "scan_interval_seconds": 1800.0,
+                "running_batch_files": 25,
+                "running_work_time_ms": 200,
+                "running_sleep_ms": 2500,
+                "idle_batch_files": 300,
+                "idle_work_time_ms": 2000,
+                "idle_sleep_ms": 500,
+                "protect_current_day": true,
+                "hard_limit_action": "stop_saving"
+            },
+            "database_path": "database.db",
+            "code_com_check": [
+                "CHECK"
+            ],
+            "code_tcp_check": [
+                "CHECK"
+            ],
+            "use_com_send_data": true,
+            "use_tcp_send_data": false
+        },
+        "send_data": {
+            "comport": "COM14",
+            "baudrate": 19200
+        }
+    }
+}

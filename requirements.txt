@@ -1,0 +1,15 @@
+PyQt5>=5.15
+opencv-python>=4.5
+numpy>=1.21
+ultralytics>=8.0
+pydantic>=2.0
+pyserial>=3.5
+sqlalchemy>=2.0
+colorlog>=6.0
+pytz>=2023.3
+psutil>=5.9
+PyYAML>=6.0
+# Optional: GPU utilization statistics in the UI.
+GPUtil>=1.4
+# Optional: required only for Basler/SODA cameras.
+# pypylon>=3.0

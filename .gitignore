@@ -1,0 +1,45 @@
+# Python bytecode and test/tool caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local virtual environments
+.venv/
+venv/
+env/
+ENV/
+.env
+.env.*
+!.env.example
+
+# PyInstaller and local packaging output
+build/
+dist/
+build_check_work/
+build_check_dist/
+*.7z
+
+# Runtime-generated inspection data
+ImageCapture/
+Log_Vision/
+database.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Ultralytics runtime output
+runs/
+
+# Editor and operating-system files
+.idea/
+.vscode/
+.vs/
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.log

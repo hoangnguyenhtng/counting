@@ -1,0 +1,3 @@
+from app.controllers.auto_controller import AutoController
+from app.controllers.hardware_controller import HardwareController
+from app.controllers.config_controller import ConfigController

@@ -1,0 +1,31 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>Icon/Add.png</file>
+        <file>Icon/Book.png</file>
+        <file>Icon/Camera.png</file>
+        <file>Icon/Capture.png</file>
+        <file>Icon/Check.png</file>
+        <file>Icon/Clear.png</file>
+        <file>Icon/Close.png</file>
+        <file>Icon/Connect.png</file>
+        <file>Icon/Create.png</file>
+        <file>Icon/Delete.png</file>
+        <file>Icon/Find.png</file>
+        <file>Icon/Gear.png</file>
+        <file>Icon/Graph.png</file>
+        <file>Icon/Label.png</file>
+        <file>Icon/Light.png</file>
+        <file>Icon/Load.png</file>
+        <file>Icon/Open.png</file>
+        <file>Icon/OpenFolder.png</file>
+        <file>Icon/OpenImage.png</file>
+        <file>Icon/Phone.png</file>
+        <file>Icon/Reset.png</file>
+        <file>Icon/Save.png</file>
+        <file>Icon/Send.png</file>
+        <file>Icon/Start.png</file>
+        <file>Icon/Stop.png</file>
+        <file>Icon/Test.png</file>
+        <file>Icon/todo_list.png</file>
+    </qresource>
+</RCC>
