@@ -81,16 +81,16 @@ python -m pytest tests -q
 
 ## Đóng gói ứng dụng
 
-Cài PyInstaller nếu máy chưa có:
+Cài bộ thư viện build đã được cố định phiên bản:
 
 ```powershell
-pip install pyinstaller
+pip install -r requirements-build.txt
 ```
 
 Tạo bộ chạy Windows:
 
 ```powershell
-pyinstaller --clean main.spec
+python -m PyInstaller --clean --noconfirm main.spec
 ```
 
 Kết quả được tạo tại `dist/VisionProtectVinylAttach/`.

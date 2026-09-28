@@ -22,6 +22,8 @@ build/
 dist/
 build_check_work/
 build_check_dist/
+build_fix_work/
+build_fix_dist/
 *.7z
 
 # Runtime-generated inspection data
