@@ -164,19 +164,21 @@ class Logger(QObject):
         callers. The configured ImageRetentionService is authoritative.
         """
         self.__check_date_and_update_log()
-        date_str = datetime.now().strftime('%Y_%m_%d')
-        time_str = datetime.now().strftime('%H_%M_%S')
+        logged_at = datetime.now()
+        date_str = logged_at.strftime('%Y_%m_%d')
+        time_str = logged_at.strftime('%H_%M_%S')
+        result_label = "OK" if str(ret).strip().upper() in ("OK", "PASS") else "NG"
 
         image_folder = get_abs_path(image_folder)
         retention = self._image_retention
         if retention is not None and not retention.can_save_image(image_folder):
             return ""
 
-        dated_image_folder = os.path.join(image_folder, date_str)
-        os.makedirs(dated_image_folder, exist_ok=True)
+        result_image_folder = os.path.join(image_folder, date_str, result_label)
+        os.makedirs(result_image_folder, exist_ok=True)
 
-        base_filename = f'{ret}_{date_str}_{time_str}.jpg'
-        image_path = os.path.join(dated_image_folder, base_filename)
+        base_filename = f'{result_label}_{date_str}_{time_str}.jpg'
+        image_path = os.path.join(result_image_folder, base_filename)
         image_path = self._get_unique_filename(image_path)
         
         try:
@@ -204,7 +206,7 @@ class Logger(QObject):
                     writer = csv.writer(f)
                     if not csv_exists:
                         writer.writerow(['Model', 'Result', 'Time'])
-                    writer.writerow([model_name, ret, time_str])
+                    writer.writerow([model_name, result_label, time_str])
 
             return image_path_fixed
         except Exception as ex:

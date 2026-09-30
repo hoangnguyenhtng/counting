@@ -61,7 +61,6 @@ class _SerialLightBase:
 
 
 class DCPController(_SerialLightBase):
-    """Controller for DCP series light sources."""
 
     def __init__(self):
         self.comport: Serial = None
@@ -100,7 +99,6 @@ class DCPController(_SerialLightBase):
 
 
 class LCPController(_SerialLightBase):
-    """Controller for LCP series light sources."""
 
     def __init__(self):
         self.comport: Serial = None
@@ -119,7 +117,6 @@ class LCPController(_SerialLightBase):
         return self.send_data(data)
 
     def off_all_channels(self):
-        # Setting brightness to 0 is more widely supported than the off ('f') command.
         success = True
         for channel in range(4):
             success = self.set_light_value(channel, 0) and success

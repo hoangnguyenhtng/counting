@@ -51,7 +51,19 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=['pyi_rth_torch_first.py'],
-    excludes=['test', 'tests', 'polars', '_polars_runtime_32', 'IPython', 'tensorboard'],
+    excludes=[
+        'test',
+        'tests',
+        'polars',
+        '_polars_runtime_32',
+        'IPython',
+        'tensorboard',
+        # The application uses PyQt5. Excluding other Qt bindings prevents
+        # PyInstaller from aborting on build machines that also have them.
+        'PySide2',
+        'PySide6',
+        'PyQt6',
+    ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,

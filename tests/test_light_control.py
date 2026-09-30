@@ -108,7 +108,7 @@ class LightControlTests(unittest.TestCase):
         self.assertEqual(controller.state, Step.CAPTURE)
         controller.is_running = False
 
-    def test_bypass_still_captures_and_saves_image_before_forcing_ok(self):
+    def test_bypass_captures_and_emits_result_for_managed_result_logging(self):
         hardware = _FakeAutoHardware()
         controller = AutoController(hardware, model_pool=None)
         config = AppConfig()
@@ -119,11 +119,7 @@ class LightControlTests(unittest.TestCase):
         controller.start(config)
         controller.handle_trigger("L1")
 
-        with (
-            patch("app.controllers.auto_controller.save_captured_image") as save_image,
-            patch("app.controllers.auto_controller.detect_tape") as detect,
-        ):
-            save_image.return_value = "ImageCapture/test.jpg"
+        with patch("app.controllers.auto_controller.detect_tape") as detect:
             controller.run_step()  # READ_TRIGGER -> ON_LIGHTING
             controller.run_step()  # ON_LIGHTING -> CAPTURE
             controller.run_step()  # CAPTURE -> OFF_LIGHTING
@@ -131,10 +127,11 @@ class LightControlTests(unittest.TestCase):
             controller.run_step()  # DETECT -> OUTPUT
 
         self.assertEqual(hardware.camera_start_count, 1)
-        save_image.assert_called_once_with(hardware.frame)
         detect.assert_not_called()
         self.assertEqual(controller.active_result.label_counts, "BYPASS_OK")
         self.assertIs(controller.active_result.src, hardware.frame)
+        self.assertIsNot(controller.active_result.dst, hardware.frame)
+        self.assertGreater(int(controller.active_result.dst[1, 1, 1]), 100)
         self.assertEqual(controller.output_str, "OK")
         self.assertEqual(controller.state, Step.OUTPUT)
         controller.is_running = False

@@ -1,13 +1,15 @@
 import os
 import unittest
+from types import SimpleNamespace
 from unittest.mock import Mock
+from unittest.mock import patch
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import numpy as np
 from PyQt5.QtCore import QEvent, QPointF, QRectF, Qt
 from PyQt5.QtGui import QMouseEvent, QPixmap
-from PyQt5.QtWidgets import QApplication, QTableWidget, QTableWidgetItem, QTextEdit
+from PyQt5.QtWidgets import QApplication, QComboBox, QTableWidget, QTableWidgetItem, QTextEdit
 
 from app.views.canvas_widget import Canvas
 from app.views.main_window import MainWindow, SYSTEM_LOG_LIMIT, UI_LOG_LIMIT
@@ -104,6 +106,27 @@ class CanvasInteractionTests(unittest.TestCase):
         self.assertEqual(len(lines), SYSTEM_LOG_LIMIT)
         self.assertEqual(lines[0], "line-0")
         self.assertEqual(lines[-1], f"line-{SYSTEM_LOG_LIMIT - 1}")
+
+    def test_plc_com_list_keeps_manually_entered_port_when_refreshing(self):
+        window = Mock()
+        window.combo_light_com = QComboBox()
+        window.combo_light_com.setEditable(True)
+        window.combo_light_com.addItem("COM9")
+        window.combo_light_com.setCurrentText("COM9")
+        window.combo_plc_com = QComboBox()
+        window.combo_plc_com.addItem("COM8")
+        window.combo_plc_com.setCurrentText("COM8")
+        detected = [SimpleNamespace(device="COM3"), SimpleNamespace(device="COM5")]
+
+        with patch("app.views.main_window.serial.tools.list_ports.comports", return_value=detected):
+            MainWindow._refresh_com_ports(window)
+
+        self.assertEqual(
+            [window.combo_plc_com.itemText(index) for index in range(window.combo_plc_com.count())],
+            ["COM3", "COM5", "COM8"],
+        )
+        self.assertEqual(window.combo_plc_com.currentText(), "COM8")
+        self.assertEqual(window.combo_light_com.currentText(), "COM9")
 
 
 if __name__ == "__main__":

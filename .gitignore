@@ -24,6 +24,8 @@ build_check_work/
 build_check_dist/
 build_fix_work/
 build_fix_dist/
+build_*/
+dist_*/
 *.7z
 
 # Runtime-generated inspection data
@@ -33,6 +35,13 @@ database.db
 *.db-journal
 *.db-shm
 *.db-wal
+
+# Local inspection/rework samples and scratch scripts
+/OK/
+/NG/
+/BYPASS/
+/rework_tape/
+/image_process.py
 
 # Ultralytics runtime output
 runs/

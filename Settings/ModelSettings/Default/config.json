@@ -1,18 +1,11 @@
 {
     "name_model": "Default",
-    "shapes": {
-        "1": [
-            128.7441406250001,
-            72.9980982730263,
-            1740.5460115131546,
-            574.8143092105277
-        ]
-    },
+    "shapes": {},
     "model_ai": {
-        "model_name": "digif-check-2.pt",
-        "conf": 0.7,
-        "iou": 0.55,
-        "max_det": 100,
+        "model_name": "VinylAttachUB-V3.pt",
+        "conf": 0.2,
+        "iou": 0.2,
+        "max_det": 1,
         "agnostic_nms": false
     },
     "hardware": {
@@ -21,18 +14,18 @@
             "port": 5000
         },
         "camera": {
-            "id": "",
+            "id": "DA5983307",
             "feature": "",
             "name": "HIK",
-            "delay": 1000
+            "delay": 500
         },
         "lighting": {
-            "comport": "COM5",
+            "comport": "COM90",
             "baudrate": 19200,
             "channel_value_0": 50,
             "channel_value_1": 50,
             "channel_value_2": 50,
-            "channel_value_3": 50,
+            "channel_value_3": 53,
             "controller": "DCPController",
             "delay": 200
         },
@@ -68,7 +61,7 @@
             "use_tcp_send_data": false
         },
         "send_data": {
-            "comport": "COM14",
+            "comport": "COM89",
             "baudrate": 19200
         }
     }

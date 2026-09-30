@@ -104,6 +104,26 @@ class ImageRetentionTests(unittest.TestCase):
             self.assertFalse(pending.exists())
             self.assertTrue(newer.exists())
 
+    def test_daily_ok_and_ng_subfolders_are_deleted_with_the_oldest_day(self):
+        clock = _Clock(0.0)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            old_day = Path(temp_dir) / "2020_01_01"
+            (old_day / "OK").mkdir(parents=True)
+            (old_day / "NG").mkdir()
+            (old_day / "OK" / "ok.jpg").write_bytes(b"x" * 20)
+            (old_day / "NG" / "ng.jpg").write_bytes(b"x" * 20)
+            newer = _write_image_bytes(temp_dir, "2020_01_02", "new.jpg", 20)
+            service = ImageRetentionService(
+                temp_dir,
+                _policy(idle_batch_files=10),
+                clock=clock,
+            )
+            clock.value = 2000.0
+
+            self.assertTrue(service.run_maintenance_cycle())
+            self.assertFalse(old_day.exists())
+            self.assertTrue(newer.exists())
+
     def test_active_cleanup_and_hard_limit_suspend_then_resume_saving(self):
         clock = _Clock(0.0)
         with tempfile.TemporaryDirectory() as temp_dir:

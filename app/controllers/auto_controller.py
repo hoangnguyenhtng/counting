@@ -10,8 +10,7 @@ from app.signals import bus
 from app.constants import Step, StepResult
 from app.models.config import AppConfig
 from app.models.result import DetectionResult
-from app.core.detection import detect_tape
-from app.core.image_storage import save_captured_image
+from app.core.detection import detect_tape, draw_result_badge
 from app.core.model_pool import ModelPool
 
 
@@ -46,10 +45,12 @@ class AutoController(QObject):
         bus.log_message.emit(f"BYPASS mode {state}", level)
 
     def _create_bypass_result(self, frame) -> DetectionResult:
+        annotated_frame = frame.copy() if frame is not None else frame
+        draw_result_badge(annotated_frame, "OK")
         return DetectionResult(
             model_name=self.config.name_model if self.config else "",
             src=frame,
-            dst=None,
+            dst=annotated_frame,
             ret="PASS",
             label_counts="BYPASS_OK",
             timecheck=0.0,
@@ -202,15 +203,6 @@ class AutoController(QObject):
                     self._return_camera_to_ready_safely()
                 if self.active_frame is None:
                     raise Exception('Failed to get frame from camera')
-                try:
-                    capture_path = save_captured_image(self.active_frame)
-                    bus.log_message.emit(
-                        f"Captured image saved: {capture_path.replace(chr(92), '/')}",
-                        "INF",
-                    )
-                except Exception as save_ex:
-                    # Archiving must not prevent the captured frame from being inspected.
-                    bus.log_message.emit(f"Failed to save captured image: {save_ex}", "ERR")
                 bus.log_message.emit("Frame captured; camera returned to READY", "INF")
                 self.state = Step.OFF_LIGHTING
 
@@ -225,7 +217,7 @@ class AutoController(QObject):
                 bus.log_message.emit("State: DETECT", "INF")
                 if self.bypass_mode:
                     self.active_result = self._create_bypass_result(self.active_frame)
-                    bus.show_image.emit(self.active_frame)
+                    bus.show_image.emit(self.active_result.dst)
                     self.output_str = "OK"
                     bus.log_message.emit(
                         "BYPASS: image captured; model inspection skipped and output forced to OK",
@@ -271,14 +263,21 @@ class AutoController(QObject):
             elif self.state == Step.ERROR:
                 bus.log_message.emit(f"State: ERROR - {self.active_error}", "ERR")
                 bus.show_status.emit(StepResult.FAIL.value)
+                error_image = (
+                    self.active_frame.copy()
+                    if self.active_frame is not None
+                    else np.zeros((100, 100, 3), dtype=np.uint8)
+                )
+                draw_result_badge(error_image, "NG")
                 self.active_result = DetectionResult(
                     model_name=self.config.name_model if self.config else "",
-                    src=self.active_frame if self.active_frame is not None else np.zeros((100, 100, 3), dtype=np.uint8),
-                    dst=None,
+                    src=self.active_frame if self.active_frame is not None else error_image,
+                    dst=error_image,
                     ret="FAIL",
                     label_counts="NG",
                     error=self.active_error or "Unknown error"
                 )
+                bus.show_image.emit(error_image)
                 self._send_output_safely("NG")
                 self.state = Step.WRITE_LOG
 

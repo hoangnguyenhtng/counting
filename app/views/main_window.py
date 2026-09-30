@@ -67,7 +67,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setObjectName("MainWindow")
-        self.setWindowTitle(f"{APP_DISPLAY_NAME} v{APP_VERSION}")
+        self.setWindowTitle(f"{APP_DISPLAY_NAME} V{APP_VERSION}")
         self.setWindowIcon(QIcon(get_abs_path("res/App/smart_factory_g.ico")))
         self.setMinimumSize(760, 520)
 
@@ -223,7 +223,7 @@ class MainWindow(QMainWindow):
         project_title.setAlignment(Qt.AlignVCenter | Qt.AlignLeft)
         layout.addWidget(project_title, 1)
 
-        project_version = QLabel(f"{ORGANIZATION_NAME}  •  v{APP_VERSION}")
+        project_version = QLabel(f"{ORGANIZATION_NAME}  •  V{APP_VERSION}")
         project_version.setObjectName("project_version")
         project_version.setAlignment(Qt.AlignVCenter | Qt.AlignRight)
         layout.addWidget(project_version)
@@ -246,13 +246,17 @@ class MainWindow(QMainWindow):
         self.combo_model.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         layout.addWidget(self.combo_model, 0, 1)
 
-        btn_load = QPushButton("Load")
-        btn_load.clicked.connect(lambda: self._on_load_config(show_popup=True))
-        layout.addWidget(btn_load, 0, 2)
+        self.btn_load_config = QPushButton("Load")
+        self.btn_load_config.clicked.connect(lambda: self._on_load_config(show_popup=True))
+        layout.addWidget(self.btn_load_config, 0, 2)
 
-        btn_save = QPushButton("Save")
-        btn_save.clicked.connect(self._on_save_config)
-        layout.addWidget(btn_save, 0, 3)
+        self.btn_save_config = QPushButton("Save")
+        self.btn_save_config.clicked.connect(self._on_save_config)
+        layout.addWidget(self.btn_save_config, 0, 3)
+
+        self.btn_new_config = QPushButton("New")
+        self.btn_new_config.clicked.connect(self._on_new_config)
+        layout.addWidget(self.btn_new_config, 0, 4)
 
         # Hardware status indicators
         self.hw_indicators = {}
@@ -270,17 +274,17 @@ class MainWindow(QMainWindow):
         self.btn_start_auto.setObjectName("btn_start_auto")
         self.btn_start_auto.setMinimumWidth(105)
         self.btn_start_auto.clicked.connect(self._on_start_auto)
-        layout.addWidget(self.btn_start_auto, 0, 5)
+        layout.addWidget(self.btn_start_auto, 0, 6)
 
         self.btn_stop_auto = QPushButton("■ Stop Auto")
         self.btn_stop_auto.setObjectName("btn_stop_auto")
         self.btn_stop_auto.setMinimumWidth(105)
         self.btn_stop_auto.setEnabled(False)
         self.btn_stop_auto.clicked.connect(self._on_stop_auto)
-        layout.addWidget(self.btn_stop_auto, 0, 6)
+        layout.addWidget(self.btn_stop_auto, 0, 7)
 
         layout.setColumnStretch(1, 2)
-        layout.setColumnStretch(4, 1)
+        layout.setColumnStretch(5, 1)
 
         return header
 
@@ -464,6 +468,15 @@ class MainWindow(QMainWindow):
         self.spin_iou.setValue(0.45)
         yolo_layout.addWidget(self.spin_iou, 2, 1)
 
+        yolo_layout.addWidget(QLabel("Max Detect:"), 3, 0)
+        self.spin_max_det = QSpinBox()
+        self.spin_max_det.setRange(1, 10000)
+        self.spin_max_det.setValue(100)
+        self.spin_max_det.setToolTip(
+            "Keep only the detections with the highest confidence scores"
+        )
+        yolo_layout.addWidget(self.spin_max_det, 3, 1)
+
         right_layout.addWidget(yolo_group)
 
         # Light Group
@@ -556,12 +569,21 @@ class MainWindow(QMainWindow):
         plc_layout.addWidget(QLabel("COM:"), 3, 0)
         self.combo_plc_com = QComboBox()
         self.combo_plc_com.setEditable(True)
+        self.combo_plc_com.setPlaceholderText("No COM port")
+        self.combo_plc_com.setToolTip(
+            "Select a detected COM port or enter one manually"
+        )
         plc_layout.addWidget(self.combo_plc_com, 3, 1)
 
-        plc_layout.addWidget(QLabel("Baud:"), 3, 2)
+        self.btn_refresh_plc_com = QPushButton("Refresh")
+        self.btn_refresh_plc_com.setToolTip("Scan available COM ports again")
+        self.btn_refresh_plc_com.clicked.connect(self._refresh_com_ports)
+        plc_layout.addWidget(self.btn_refresh_plc_com, 3, 2)
+
+        plc_layout.addWidget(QLabel("Baud:"), 3, 3)
         self.combo_plc_baud = QComboBox()
         self.combo_plc_baud.addItems(["9600", "19200", "38400", "115200"])
-        plc_layout.addWidget(self.combo_plc_baud, 3, 3, 1, 2)
+        plc_layout.addWidget(self.combo_plc_baud, 3, 4)
 
         self.btn_com_open = QPushButton("Open COM")
         self.btn_com_open.clicked.connect(self._on_open_com)
@@ -960,6 +982,13 @@ class MainWindow(QMainWindow):
         """Require Teaching authentication once during each application session."""
         if self._handling_protected_tab_change:
             return
+        if self.is_auto_running and self.tab_widget.widget(index) is not self.tab_auto:
+            self._handling_protected_tab_change = True
+            try:
+                self.tab_widget.setCurrentWidget(self.tab_auto)
+            finally:
+                self._handling_protected_tab_change = False
+            return
         if self.tab_widget.widget(index) is not self.tab_teaching:
             self._last_authorized_tab_index = index
             return
@@ -1012,15 +1041,34 @@ class MainWindow(QMainWindow):
         self._on_load_config(show_popup=False)
 
     def _refresh_com_ports(self):
-        ports = [p.device for p in serial.tools.list_ports.comports()]
-        for combo in [self.combo_light_com, self.combo_plc_com]:
-            current = combo.currentText()
-            combo.clear()
-            combo.addItems(ports)
-            if current and combo.findText(current) == -1:
-                combo.addItem(current)
-            if current:
-                combo.setCurrentText(current)
+        ports = list(dict.fromkeys(
+            port.device for port in serial.tools.list_ports.comports() if port.device
+        ))
+
+        # Both COM selectors remain editable for manually configured devices.
+        light_current = self.combo_light_com.currentText().strip()
+        self.combo_light_com.clear()
+        self.combo_light_com.addItems(ports)
+        if light_current and self.combo_light_com.findText(light_current) == -1:
+            self.combo_light_com.addItem(light_current)
+        if light_current:
+            self.combo_light_com.setCurrentText(light_current)
+
+        plc_current = self.combo_plc_com.currentText().strip()
+        self.combo_plc_com.clear()
+        self.combo_plc_com.addItems(ports)
+        if plc_current and self.combo_plc_com.findText(plc_current) == -1:
+            self.combo_plc_com.addItem(plc_current)
+        plc_index = self.combo_plc_com.findText(plc_current)
+        self.combo_plc_com.setCurrentIndex(plc_index)
+        if ports:
+            self.combo_plc_com.setToolTip(
+                f"Detected: {', '.join(ports)}. You can also enter a COM port manually."
+            )
+        else:
+            self.combo_plc_com.setToolTip(
+                "No COM ports detected. You can enter a COM port manually or click Refresh."
+            )
 
     def _refresh_ai_models(self):
         models = self.config_controller.list_ai_models()
@@ -1040,6 +1088,10 @@ class MainWindow(QMainWindow):
             self.combo_camera_id.addItem(f"{name} ({sn})", sn)
 
     def _on_load_config(self, show_popup=False):
+        if self.is_auto_running:
+            if show_popup:
+                QMessageBox.warning(self, "Load Model", "Stop Auto mode before loading settings.")
+            return
         model_name = self.combo_model.currentText()
         if not model_name:
             if show_popup:
@@ -1059,11 +1111,66 @@ class MainWindow(QMainWindow):
     def _on_save_config(self):
         return self._save_config(confirm_overwrite=True, show_success=True)
 
+    def _on_new_config(self):
+        if self.is_auto_running:
+            QMessageBox.warning(
+                self, "New Model", "Stop Auto mode before creating a model."
+            )
+            return
+
+        model_name, accepted = QInputDialog.getText(
+            self,
+            "New Model",
+            "Enter a name for the new model configuration:",
+        )
+        if not accepted:
+            return
+
+        try:
+            model_name = self.config_controller.validate_model_name(model_name)
+            config = self._config_from_ui()
+            config.shapes = self._get_shapes_from_canvas()
+            if len(config.shapes) > 1:
+                QMessageBox.warning(
+                    self,
+                    "New Model",
+                    "A model can contain at most one ROI. Clear the extra ROIs first.",
+                )
+                return
+            config = self.config_controller.add_model(model_name, config)
+        except (ValueError, FileExistsError) as exc:
+            QMessageBox.warning(self, "New Model", str(exc))
+            return
+        except Exception as exc:
+            bus.log_message.emit(f"Failed to create model '{model_name}': {exc}", "ERR")
+            QMessageBox.critical(self, "New Model", str(exc))
+            return
+
+        self.current_config = config
+        models = self.config_controller.list_models()
+        self.combo_model.clear()
+        self.combo_model.addItems(models)
+        self.combo_model.setCurrentText(model_name)
+        self._apply_image_retention_config(config)
+        bus.log_message.emit(f"Created model settings: {model_name}", "INF")
+        QMessageBox.information(
+            self,
+            "New Model",
+            f"Model configuration '{model_name}' was created and selected.",
+        )
+
     def _on_save_shortcut(self):
+        if self.is_auto_running:
+            self.statusBar().showMessage("Stop Auto mode before saving configuration", 3000)
+            return
         if self._save_config(confirm_overwrite=False, show_success=False):
             self.statusBar().showMessage("Configuration saved (Ctrl+S)", 3000)
 
     def _save_config(self, confirm_overwrite=True, show_success=True) -> bool:
+        if self.is_auto_running:
+            if show_success:
+                QMessageBox.warning(self, "Save Model", "Stop Auto mode before saving settings.")
+            return False
         model_name = self.combo_model.currentText()
         if not model_name:
             QMessageBox.warning(self, "Save Model", "Please select a model configuration.")
@@ -1071,10 +1178,10 @@ class MainWindow(QMainWindow):
         config = self._config_from_ui()
         # Save shapes from canvas
         config.shapes = self._get_shapes_from_canvas()
-        if len(config.shapes) != 1:
+        if len(config.shapes) > 1:
             QMessageBox.warning(
                 self, "Save Model",
-                "A model must contain exactly one ROI before it can be saved."
+                "A model can contain at most one ROI. Clear the extra ROIs before saving."
             )
             return False
         if confirm_overwrite:
@@ -1116,6 +1223,7 @@ class MainWindow(QMainWindow):
                 model_name=self.combo_yolo_model.currentText(),
                 conf=self.spin_conf.value(),
                 iou=self.spin_iou.value(),
+                max_det=self.spin_max_det.value(),
             ),
             hardware=HardwareConfig(
                 server=ServerConfig(
@@ -1178,6 +1286,7 @@ class MainWindow(QMainWindow):
             self.combo_yolo_model.setCurrentText(config.model_ai.model_name)
         self.spin_conf.setValue(config.model_ai.conf)
         self.spin_iou.setValue(config.model_ai.iou)
+        self.spin_max_det.setValue(config.model_ai.max_det)
 
         # Light
         self.combo_light_type.setCurrentText(config.hardware.lighting.controller)
@@ -1192,7 +1301,8 @@ class MainWindow(QMainWindow):
         # I/O
         self.line_tcp_ip.setText(config.hardware.server.ip)
         self.line_tcp_port.setText(str(config.hardware.server.port))
-        self._set_combo(self.combo_plc_com, config.hardware.send_data.comport)
+        saved_plc_com = (config.hardware.send_data.comport or "").strip()
+        self._set_combo(self.combo_plc_com, saved_plc_com)
         self.combo_plc_baud.setCurrentText(str(config.hardware.send_data.baudrate))
         self.chk_use_tcp.setChecked(config.hardware.system.use_tcp_send_data)
         self.chk_use_com.setChecked(config.hardware.system.use_com_send_data)
@@ -1589,8 +1699,8 @@ class MainWindow(QMainWindow):
         config = self._config_from_ui()
         config.shapes = self._get_shapes_from_canvas()
 
-        if len(config.shapes) != 1:
-            QMessageBox.warning(self, "Warning", "Please define exactly one ROI first.")
+        if len(config.shapes) > 1:
+            QMessageBox.warning(self, "Warning", "Please keep at most one ROI.")
             return
 
         if not config.model_ai.model_name:
@@ -1701,11 +1811,21 @@ class MainWindow(QMainWindow):
         self.btn_tcp_stop.setEnabled(False)
 
     def _on_open_com(self):
-        com = self.combo_plc_com.currentText()
+        com = self.combo_plc_com.currentText().strip()
+        if not com:
+            QMessageBox.warning(
+                self,
+                "COM Connection",
+                "Select a detected COM port or enter one manually.",
+            )
+            return
         baud = int(self.combo_plc_baud.currentText())
         if self.hardware_controller.open_send_data(com, baud):
             self.btn_com_open.setEnabled(False)
             self.btn_com_close.setEnabled(True)
+            self.combo_plc_com.setEnabled(False)
+            self.combo_plc_baud.setEnabled(False)
+            self.btn_refresh_plc_com.setEnabled(False)
         else:
             QMessageBox.warning(
                 self, "COM Connection",
@@ -1716,6 +1836,9 @@ class MainWindow(QMainWindow):
         self.hardware_controller.close_send_data()
         self.btn_com_open.setEnabled(True)
         self.btn_com_close.setEnabled(False)
+        self.combo_plc_com.setEnabled(True)
+        self.combo_plc_baud.setEnabled(True)
+        self.btn_refresh_plc_com.setEnabled(True)
 
     def _ensure_auto_camera_ready(self, config, bypass_enabled: bool) -> tuple:
         """Connect the configured camera for Auto when the operator has not done so."""
@@ -1831,6 +1954,9 @@ class MainWindow(QMainWindow):
             self.hardware_controller.close_send_data()
             self.btn_com_open.setEnabled(True)
             self.btn_com_close.setEnabled(False)
+            self.combo_plc_com.setEnabled(True)
+            self.combo_plc_baud.setEnabled(True)
+            self.btn_refresh_plc_com.setEnabled(True)
         self._auto_opened_io = {"tcp": False, "com": False}
 
     # ================================================================
@@ -1894,9 +2020,9 @@ class MainWindow(QMainWindow):
 
         config = self._config_from_ui()
         config.shapes = self._get_shapes_from_canvas()
-        if len(config.shapes) != 1:
+        if len(config.shapes) > 1:
             QMessageBox.warning(
-                self, "Developer Mode", "Define exactly one ROI before starting the simulation."
+                self, "Developer Mode", "Keep at most one ROI before starting the simulation."
             )
             return
         if not config.model_ai.model_name:
@@ -2218,12 +2344,14 @@ class MainWindow(QMainWindow):
         config.shapes = self._get_shapes_from_canvas()
         bypass_enabled = self.btn_bypass.isChecked()
 
-        if not bypass_enabled and len(config.shapes) != 1:
-            QMessageBox.warning(self, "Warning", "Please define exactly one ROI before starting Auto mode.")
+        if not bypass_enabled and len(config.shapes) > 1:
+            QMessageBox.warning(self, "Warning", "Please keep at most one ROI before starting Auto mode.")
             return
         if not bypass_enabled and not config.model_ai.model_name:
             QMessageBox.warning(self, "Warning", "Please select a YOLO model before starting Auto mode.")
             return
+        if not bypass_enabled and not config.shapes:
+            bus.log_message.emit("No ROI configured; Auto detection will use the full image.", "INF")
         # Auto owns camera capture timing; stop the competing preview reader.
         if not self._stop_camera_preview():
             QMessageBox.critical(
@@ -2269,6 +2397,7 @@ class MainWindow(QMainWindow):
             self.auto_worker.start()
         except Exception as exc:
             self.is_auto_running = False
+            self._on_auto_state_changed(False)
             self._stop_auto_owned_io()
             self._stop_auto_owned_light()
             self._stop_auto_owned_camera()
@@ -2348,6 +2477,16 @@ class MainWindow(QMainWindow):
 
     def _on_auto_state_changed(self, is_running: bool):
         self.is_auto_running = is_running
+        if is_running:
+            self.tab_widget.setCurrentWidget(self.tab_auto)
+        for tab in (self.tab_developer, self.tab_teaching, self.tab_io):
+            self.tab_widget.setTabEnabled(self.tab_widget.indexOf(tab), not is_running)
+        self.combo_model.setEnabled(not is_running)
+        self.btn_load_config.setEnabled(not is_running)
+        self.btn_save_config.setEnabled(not is_running)
+        self.btn_new_config.setEnabled(not is_running)
+        self.shortcut_save_config.setEnabled(not is_running)
+        self.btn_bypass.setEnabled(not is_running)
         self.btn_start_auto.setEnabled(not is_running and not self.is_developer_armed)
         self.btn_stop_auto.setEnabled(is_running)
         self.btn_capture.setEnabled(not is_running)
@@ -2374,11 +2513,18 @@ class MainWindow(QMainWindow):
             self.btn_tcp_stop.setEnabled(False)
             self.btn_com_open.setEnabled(False)
             self.btn_com_close.setEnabled(False)
+            self.combo_plc_com.setEnabled(False)
+            self.combo_plc_baud.setEnabled(False)
+            self.btn_refresh_plc_com.setEnabled(False)
         else:
             self.btn_tcp_start.setEnabled(not self.hardware_controller.is_connect_server)
             self.btn_tcp_stop.setEnabled(self.hardware_controller.is_connect_server)
             self.btn_com_open.setEnabled(not self.hardware_controller.is_com_send_data)
             self.btn_com_close.setEnabled(self.hardware_controller.is_com_send_data)
+            com_settings_enabled = not self.hardware_controller.is_com_send_data
+            self.combo_plc_com.setEnabled(com_settings_enabled)
+            self.combo_plc_baud.setEnabled(com_settings_enabled)
+            self.btn_refresh_plc_com.setEnabled(com_settings_enabled)
         self.btn_start_auto.setProperty("activeAction", not is_running)
         self.btn_stop_auto.setProperty("activeAction", is_running)
         for button in (self.btn_start_auto, self.btn_stop_auto):

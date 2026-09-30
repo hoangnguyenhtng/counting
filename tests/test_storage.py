@@ -15,7 +15,7 @@ from app.security import teaching_password_is_valid
 
 class StorageTests(unittest.TestCase):
     def test_project_metadata_and_default_teaching_password(self):
-        self.assertEqual(APP_VERSION, "1.0.0")
+        self.assertEqual(APP_VERSION, "1.1.0")
         self.assertIn("Vision Protect Vinyl Attach", APP_DISPLAY_NAME)
         with patch.dict(os.environ, {}, clear=True):
             self.assertTrue(teaching_password_is_valid("1"))
@@ -77,9 +77,27 @@ class StorageTests(unittest.TestCase):
                 "Log_Vision",
                 "LogImage",
                 datetime.now().strftime("%Y_%m_%d"),
+                "OK",
             )
             self.assertEqual(os.path.dirname(saved_path), expected_folder.replace("\\", "/"))
             self.assertTrue(os.path.isfile(saved_path))
+
+    def test_auto_result_images_are_separated_into_ok_and_ng_folders(self):
+        image = np.zeros((8, 8, 3), dtype=np.uint8)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with patch("data.logger.get_abs_path", side_effect=lambda path: path if os.path.isabs(path) else os.path.join(temp_dir, path)):
+                logger = Logger("StorageTestResultFolders")
+                image_root = os.path.join(temp_dir, "Log_Vision", "LogImage")
+                ok_path = logger.log_image("model", image, image_root, ret="OK")
+                ng_path = logger.log_image("model", image, image_root, ret="NG")
+
+            day_folder = datetime.now().strftime("%Y_%m_%d")
+            self.assertEqual(os.path.basename(os.path.dirname(ok_path)), "OK")
+            self.assertEqual(os.path.basename(os.path.dirname(ng_path)), "NG")
+            self.assertEqual(os.path.basename(os.path.dirname(os.path.dirname(ok_path))), day_folder)
+            self.assertTrue(os.path.isfile(ok_path))
+            self.assertTrue(os.path.isfile(ng_path))
 
     def test_hard_limit_skips_image_write_without_failing_inspection_logger(self):
         class SuspendedRetention:
