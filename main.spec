@@ -3,6 +3,7 @@ import os
 import shutil
 from pathlib import Path
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+from app.metadata import APP_EXECUTABLE_NAME
 
 os.environ["POLARS_SKIP_CPU_CHECK"] = "1"
 os.environ["YOLO_AUTOINSTALL"] = "false"
@@ -24,6 +25,7 @@ hiddenimports = [
     'PyQt5.QtCore',
     'PyQt5.QtGui',
     'PyQt5.QtWidgets',
+    'PyQt5.uic',
     'cv2',
     'serial',
     'serial.tools.list_ports',
@@ -79,7 +81,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='VisionProtectVinylAttach',
+    name=APP_EXECUTABLE_NAME,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -101,14 +103,14 @@ coll = COLLECT(
     strip=False,
     upx=False,
     upx_exclude=[],
-    name='VisionProtectVinylAttach',
+    name=APP_EXECUTABLE_NAME,
 )
 
 # These are runtime/user-editable resources. The application intentionally
-# resolves them beside VisionProtectVinylAttach.exe, so keep them outside
+# resolves them beside TrayCounter.exe, so keep them outside
 # PyInstaller's _internal
 # directory.
-bundle_root = Path(DISTPATH) / 'VisionProtectVinylAttach'
+bundle_root = Path(DISTPATH) / APP_EXECUTABLE_NAME
 for source_dir in (
     Path('res/App'),
     Path('res/Style'),
@@ -124,3 +126,9 @@ for source_dir in (
             bundle_root / source_dir,
             dirs_exist_ok=True,
         )
+
+# Keep the Designer form editable in the portable distribution as well.
+ui_source = Path('tray_counter/app/main_window.ui')
+ui_target = bundle_root / ui_source
+ui_target.parent.mkdir(parents=True, exist_ok=True)
+shutil.copy2(ui_source, ui_target)

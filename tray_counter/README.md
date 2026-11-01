@@ -1,4 +1,4 @@
-# Đếm tray theo code — trigger PLC
+# Tray Counter — đếm tray theo code, trigger PLC
 
 Luồng chạy mặc định của `python main.py`. Dùng `python main.py --legacy` để mở giao diện kiểm tape cũ.
 
@@ -14,6 +14,31 @@ python -m tray_counter --settings tray_counter/config/settings.yaml
 Đường dẫn trong `settings.yaml` và `registry.json` tính từ thư mục `tray_counter/` (thư mục cha của `config/`). Dữ liệu mặc định ở `tray_counter/data/`, tách khỏi `database.db` của giao diện cũ. Có thể đổi tên cột Excel, cách xử lý code trùng, thời gian chụp/xử lý/nạp model, số ngày giữ ảnh và cấu hình video trong settings.
 
 `registry.json` ban đầu rỗng vì dự án hiện chưa có model target/other đã huấn luyện cho các code sản xuất. Tham khảo `config/registry.example.json`, đưa model ONNX thật vào `models/`, rồi thêm cấu hình tương ứng. Code chưa có model vẫn hiện trong danh sách Excel nhưng không được chọn. Các model kiểm tape `.pt` cũ không tự động chuyển thành model phân biệt mã sản phẩm.
+
+## Chỉnh giao diện bằng Qt Designer
+
+Form đang chạy là **`tray_counter/app/main_window.ui`**, định dạng Qt Designer / PyQt5. File `res/UI/mainwindow.ui` thuộc giao diện tape cũ, không được dùng ở chế độ đếm tray.
+
+```powershell
+designer tray_counter/app/main_window.ui
+```
+
+Nếu lệnh `designer` chưa có trong PATH, mở Qt Designer rồi dùng **File → Open** để chọn file trên. Có thể sửa chữ, placeholder, màu, font, kích thước, thứ tự widget và các layout bằng kéo thả; **Ctrl+R** xem trước, **Ctrl+S** lưu. Chạy lại chương trình để thấy thay đổi. Không cần sinh lại `main_window.py` hay chạy `pyuic5`; chương trình dùng `PyQt5.uic.loadUi` đọc form mỗi lần khởi động.
+
+Giữ nguyên `objectName` của các widget mà controller dùng:
+
+| Nhóm | objectName |
+| --- | --- |
+| Người thao tác, Excel | `actor`, `load_button`, `export_button` |
+| Camera | `camera_kind`, `camera_source`, `camera_button` |
+| Code | `filter`, `codes`, `select_button` |
+| Trạng thái và ảnh | `readiness`, `summary`, `image` |
+| Tray | `trays`, `recount_button`, `finish_button`, `skip_button` |
+| PLC và log | `trigger`, `plc_signals`, `log` |
+
+Kết nối signal/slot và logic nằm trong `tray_counter/app/main_window.py`. Trạng thái sẵn sàng, tổng số lượng, ảnh, chữ TRIGGER và trạng thái bật/tắt nút được cập nhật khi chạy. Bảng `codes` cần giữ 5 cột, bảng `trays` cần giữ 6 cột; mục trong `camera_kind` là tên loại camera mà chương trình dùng. Nếu đổi tên hoặc loại widget, thêm hành vi, đổi cấu trúc bảng hay tên loại camera thì cập nhật controller tương ứng.
+
+Tên chung, phiên bản và tên file đóng gói nằm trong `app/metadata.py`. Khi build bằng `main.spec`, kết quả là `dist/TrayCounter/TrayCounter.exe`; form được chép ra `dist/TrayCounter/tray_counter/app/main_window.ui` để vẫn chỉnh được mà không cần build lại. Window title của form có thể sửa trực tiếp trong Designer.
 
 ## Vận hành
 

@@ -1,4 +1,4 @@
-# Fold Tape Detection
+# Tray Counter
 
 Luồng mặc định hiện là **đếm tray theo code từ Excel, nhận trigger từ PLC**, theo thiết kế ngày 02/11/2026. Có quản lý tổng theo code, phát hiện lẫn mã/lowconf, handshake BUSY/DONE/RESULT/HEARTBEAT, đếm lại có lịch sử, lưu SQLite/PNG và xuất báo cáo Excel.
 
@@ -8,6 +8,16 @@ python main.py
 ```
 
 Xem [hướng dẫn đếm tray](tray_counter/README.md) để cấu hình registry/model, Excel, camera, SimPLC và chạy kiểm thử. Cấu hình mới ở `tray_counter/config/settings.yaml`. Hiện dùng SimPLC trong khi chờ chốt giao thức/địa chỉ PLC thật; cần model target/other đã huấn luyện theo code để đếm ảnh sản phẩm.
+
+## Chỉnh giao diện bằng Qt Designer
+
+Mở [tray_counter/app/main_window.ui](tray_counter/app/main_window.ui) bằng Qt Designer (PyQt5 / Qt 5):
+
+```powershell
+designer tray_counter/app/main_window.ui
+```
+
+Sửa bố cục, chữ, màu, font hoặc kích thước rồi lưu và chạy lại `python main.py`. Ứng dụng đọc trực tiếp `.ui`, không cần chuyển sang file Python bằng `pyuic5`. Giữ nguyên `objectName` của các widget đang được chương trình sử dụng. Logic và kết nối nút nằm ở `tray_counter/app/main_window.py`; xem [hướng dẫn chi tiết](tray_counter/README.md#chỉnh-giao-diện-bằng-qt-designer).
 
 Các mục dưới đây mô tả **chế độ kiểm tape cũ**, mở bằng `python main.py --legacy`.
 
@@ -102,12 +112,13 @@ Tạo bộ chạy Windows:
 python -m PyInstaller --clean --noconfirm main.spec
 ```
 
-Kết quả được tạo tại `dist/VisionProtectVinylAttach/`.
+Kết quả được tạo tại `dist/TrayCounter/TrayCounter.exe`. File `tray_counter/app/main_window.ui` được chép cạnh bản chạy để tiếp tục chỉnh bằng Qt Designer; lưu rồi mở lại ứng dụng để áp dụng.
 
 ## Cấu trúc dự án
 
 ```text
-app/                 Giao diện, controller, worker và xử lý nghiệp vụ
+tray_counter/        Luồng đếm tray, model, cấu hình và giao diện .ui chính
+app/                 Metadata chung và giao diện/controller kiểm tape cũ
 data/                Ghi log, cấu hình JSON và cơ sở dữ liệu
 hardware/            Camera, TCP/COM và bộ điều khiển đèn
 res/                  Model AI, biểu tượng, stylesheet và tài nguyên UI

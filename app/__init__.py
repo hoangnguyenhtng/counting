@@ -1,4 +1,4 @@
-"""Vision Protect Vinyl Attach application package."""
+"""Tray Counter application metadata and legacy inspection modules."""
 
 from app.metadata import APP_VERSION
 

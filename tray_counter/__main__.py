@@ -4,9 +4,12 @@ from pathlib import Path
 
 import yaml
 
+from app.metadata import APP_DISPLAY_NAME, APP_VERSION, ORGANIZATION_NAME
+from app.paths import get_abs_path
+
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Đếm tray theo code và PLC trigger")
+    parser = argparse.ArgumentParser(description=f"{APP_DISPLAY_NAME} — đếm tray theo code và PLC trigger")
     package_root = Path(sys.executable).resolve().parent / "tray_counter" if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
     parser.add_argument("--settings", default=str(package_root / "config" / "settings.yaml"))
     args = parser.parse_args(argv)
@@ -15,6 +18,7 @@ def main(argv=None):
 
     # The counting application uses ONNX Runtime and does not initialize Torch.
     from PyQt5.QtCore import Qt
+    from PyQt5.QtGui import QIcon
     from PyQt5.QtWidgets import QApplication, QMessageBox
     from .app.main_window import MainWindow
     from .core.camera import IndustrialCamera, SimCamera
@@ -29,7 +33,10 @@ def main(argv=None):
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
     app = QApplication([sys.argv[0]])
-    app.setApplicationName("Tray Counter")
+    app.setApplicationName(APP_DISPLAY_NAME)
+    app.setApplicationVersion(APP_VERSION)
+    app.setOrganizationName(ORGANIZATION_NAME)
+    app.setWindowIcon(QIcon(get_abs_path("res/App/smart_factory_g.ico")))
     storage = camera = worker = None
     try:
         settings = yaml.safe_load(path.read_text(encoding="utf-8-sig"))

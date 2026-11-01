@@ -1,12 +1,11 @@
-"""Vision Protect Vinyl Attach - Smart Factory G entry point."""
+"""Tray Counter - Smart Factory G entry point."""
 import os
 import sys
 from pathlib import Path
 
-from app.metadata import APP_DISPLAY_NAME, APP_VERSION, ORGANIZATION_NAME
+from app.metadata import APP_DISPLAY_NAME, APP_USER_MODEL_ID, APP_VERSION, ORGANIZATION_NAME
 
 APP_NAME = APP_DISPLAY_NAME
-APP_USER_MODEL_ID = f"SmartFactoryG.VisionProtectVinylAttach.{APP_VERSION}"
 _DLL_DIRECTORY_HANDLES = []
 
 

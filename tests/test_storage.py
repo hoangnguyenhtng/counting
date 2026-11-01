@@ -16,7 +16,7 @@ from app.security import teaching_password_is_valid
 class StorageTests(unittest.TestCase):
     def test_project_metadata_and_default_teaching_password(self):
         self.assertEqual(APP_VERSION, "1.1.0")
-        self.assertIn("Vision Protect Vinyl Attach", APP_DISPLAY_NAME)
+        self.assertIn("Tray Counter", APP_DISPLAY_NAME)
         with patch.dict(os.environ, {}, clear=True):
             self.assertTrue(teaching_password_is_valid("1"))
             self.assertFalse(teaching_password_is_valid("2"))

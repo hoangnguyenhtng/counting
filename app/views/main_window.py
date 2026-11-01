@@ -1,5 +1,5 @@
 """
-Vision Protect Vinyl Attach — Simplified Main Window
+Tray Counter — Legacy tape inspection window
 Two-tab UI: Teaching & Setup | Auto Inspection
 """
 import os

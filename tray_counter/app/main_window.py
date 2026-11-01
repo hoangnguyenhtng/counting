@@ -1,17 +1,21 @@
 from pathlib import Path
 
 import cv2
+from PyQt5 import uic
 from PyQt5.QtCore import QObject, Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import (
-    QAbstractItemView, QComboBox, QFileDialog, QGridLayout, QHBoxLayout, QHeaderView,
-    QInputDialog, QLabel, QLineEdit, QMainWindow, QMessageBox, QPushButton, QSplitter,
-    QTableWidget, QTableWidgetItem, QTextEdit, QVBoxLayout, QWidget,
+    QFileDialog, QHeaderView, QInputDialog, QLineEdit, QMainWindow, QMessageBox,
+    QTableWidgetItem,
 )
 
+from app.paths import get_abs_path
 from ..core.models import Status
 from ..core.plc import SimPLC
 from ..core.storage import annotate
+
+
+UI_FILE = Path(get_abs_path("tray_counter/app/main_window.ui"))
 
 
 class Bridge(QObject):
@@ -23,102 +27,27 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.worker, self.camera_factory = worker, camera_factory
         self.state_data, self.preview = {}, None
+        # The Designer form is the source of layout, text and widget properties.
+        # Keep business logic and signal bindings here so editing the .ui is enough.
+        uic.loadUi(str(UI_FILE), self)
         self.bridge = Bridge(self)
         self.bridge.event.connect(self._event)
         self.worker.on_event = self.bridge.event.emit
-        self.setWindowTitle("Đếm tray theo code • PLC trigger")
-        self.resize(1180, 800)
-        self.setMinimumSize(860, 620)
-        root = QWidget()
-        self.setCentralWidget(root)
-        outer = QVBoxLayout(root)
-        controls = QGridLayout()
-        outer.addLayout(controls)
-        controls.addWidget(QLabel("Người thao tác:"), 0, 0)
-        self.actor = QLineEdit()
-        self.actor.setPlaceholderText("Tên / mã nhân viên")
-        controls.addWidget(self.actor, 0, 1)
-        self.load_button = QPushButton("Nạp Excel đầu ngày")
         self.load_button.clicked.connect(self._load)
-        controls.addWidget(self.load_button, 0, 2)
-        self.export_button = QPushButton("Xuất báo cáo Excel")
         self.export_button.clicked.connect(self._export)
-        controls.addWidget(self.export_button, 0, 3)
-        self.camera_kind = QComboBox()
-        self.camera_kind.addItems(["SimCamera", "HIK", "Basler", "Webcam"])
         self.camera_kind.setCurrentText(initial_camera_type)
-        controls.addWidget(self.camera_kind, 1, 0)
-        self.camera_source = QLineEdit()
-        self.camera_source.setPlaceholderText("Thư mục ảnh giả lập hoặc serial / ID camera")
-        controls.addWidget(self.camera_source, 1, 1, 1, 2)
-        self.camera_button = QPushButton("Đổi nguồn camera")
         self.camera_button.clicked.connect(self._camera)
-        controls.addWidget(self.camera_button, 1, 3)
-        self.readiness = QLabel("Chưa chọn code")
-        outer.addWidget(self.readiness)
-        split = QSplitter(Qt.Horizontal)
-        outer.addWidget(split, 1)
-        left, right = QWidget(), QWidget()
-        ll, rl = QVBoxLayout(left), QVBoxLayout(right)
-        ll.setContentsMargins(0, 0, 6, 0)
-        rl.setContentsMargins(6, 0, 0, 0)
-        split.addWidget(left)
-        split.addWidget(right)
-        self.filter = QLineEdit()
-        self.filter.setPlaceholderText("Lọc code trong Excel...")
         self.filter.textChanged.connect(self._filter)
-        ll.addWidget(self.filter)
-        self.codes = QTableWidget(0, 5)
-        self.codes.setHorizontalHeaderLabels(["Code", "Excel", "Đã đếm", "Trạng thái", "Model"])
-        self.codes.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.codes.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.codes.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.codes.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
-        self.codes.horizontalHeader().setStretchLastSection(True)
         self.codes.itemSelectionChanged.connect(self._buttons)
-        ll.addWidget(self.codes, 1)
-        self.select_button = QPushButton("Chọn code / Tiếp tục xử lý lệch")
         self.select_button.clicked.connect(self._select)
-        ll.addWidget(self.select_button)
-        self.summary = QLabel("Nạp Excel và chọn code để bắt đầu")
-        self.summary.setWordWrap(True)
-        self.summary.setStyleSheet("font-size: 18px; font-weight: bold; padding: 8px;")
-        rl.addWidget(self.summary)
-        self.image = QLabel("Ảnh tray sau mỗi trigger")
-        self.image.setAlignment(Qt.AlignCenter)
-        self.image.setMinimumSize(280, 190)
-        self.image.setStyleSheet("background: #17212b; color: #d4e3ef; border-radius: 5px;")
-        rl.addWidget(self.image, 2)
-        self.trays = QTableWidget(0, 6)
-        self.trays.setHorizontalHeaderLabels(["Tray", "Đếm", "Lạ", "Lowconf", "Kết quả", "Lịch sử"])
-        self.trays.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.trays.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        rl.addWidget(self.trays, 1)
-        actions = QHBoxLayout()
-        rl.addLayout(actions)
-        self.recount_button = QPushButton("Đếm lại tray vừa rồi")
         self.recount_button.clicked.connect(lambda: self.worker.submit("recount", actor=self.actor.text()))
-        actions.addWidget(self.recount_button)
-        self.finish_button = QPushButton("Xong code")
         self.finish_button.clicked.connect(lambda: self.worker.submit("finish", actor=self.actor.text()))
-        actions.addWidget(self.finish_button)
-        self.skip_button = QPushButton("Quản lý bỏ qua code lệch")
         self.skip_button.clicked.connect(self._skip)
-        rl.addWidget(self.skip_button)
-        simulation = QHBoxLayout()
-        outer.addLayout(simulation)
-        self.trigger = QPushButton("SimPLC: bật TRIGGER ↑")
-        self.trigger.setCheckable(True)
         self.trigger.setEnabled(isinstance(worker.plc, SimPLC))
         self.trigger.toggled.connect(self._trigger)
-        simulation.addWidget(self.trigger)
-        self.plc_signals = QLabel()
-        simulation.addWidget(self.plc_signals, 1)
-        self.log = QTextEdit()
-        self.log.setReadOnly(True)
-        self.log.setMaximumHeight(100)
         self.log.document().setMaximumBlockCount(200)
-        outer.addWidget(self.log)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._refresh_plc)
         self.timer.start(100)
