@@ -1,0 +1,3 @@
+-r requirements.txt
+pytest>=8
+onnx>=1.16

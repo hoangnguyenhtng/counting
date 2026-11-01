@@ -8,5 +8,10 @@ import os
 os.environ.setdefault("YOLO_AUTOINSTALL", "false")
 os.environ.setdefault("POLARS_SKIP_CPU_CHECK", "1")
 
-# PyQt5 can otherwise load an incompatible C++ runtime before c10.dll.
-import torch  # noqa: E402,F401
+import sys
+
+# Only the legacy detector needs Torch. NumPy first avoids initializing a
+# second OpenMP runtime on Conda installations, while Torch must precede Qt.
+if "--legacy" in sys.argv:
+    import numpy  # noqa: E402,F401
+    import torch  # noqa: E402,F401

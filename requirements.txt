@@ -9,7 +9,6 @@ colorlog>=6.0
 pytz>=2023.3
 psutil>=5.9
 PyYAML>=6.0
-# Optional: GPU utilization statistics in the UI.
 GPUtil>=1.4
-# Optional: required only for Basler/SODA cameras.
-# pypylon>=3.0
+openpyxl>=3.1
+onnxruntime>=1.17

@@ -32,6 +32,8 @@ dist_*/
 ImageCapture/
 Log_Vision/
 database.db
+tray_counter/data/
+tray_counter/sim_images/
 *.db-journal
 *.db-shm
 *.db-wal

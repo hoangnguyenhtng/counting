@@ -1,0 +1,33 @@
+# Paths are relative to tray_counter/ (the parent of this config directory).
+registry: config/registry.json
+data_dir: data
+excel:
+  code_column: code
+  qty_column: qty
+  duplicates: error  # error or merge
+plc:
+  type: sim
+  heartbeat_s: 0.5
+  poll_ms: 10
+  # Vendor/protocol/addresses must be agreed before adding a real PLC adapter.
+camera:
+  type: SimCamera  # SimCamera, HIK, Basler, Webcam
+  folder: sim_images
+  loop: false
+  id: ""
+  feature: ""
+  exposure_us: 10000
+  gain: 0
+  timeout_s: 2
+worker:
+  cycle_timeout_s: 10
+  model_timeout_s: 60
+onnx:
+  providers: [CPUExecutionProvider]
+images:
+  keep_days: 30
+video:
+  enabled: false
+  folder: data/video
+  fps: 10
+  # size: [1280, 720]  # omitted: original resolution

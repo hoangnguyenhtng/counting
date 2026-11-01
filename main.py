@@ -49,10 +49,11 @@ configure_windows_app_identity()
 # Never attempt package installation or downloads on the factory computer.
 os.environ.setdefault("YOLO_AUTOINSTALL", "false")
 
-# PyQt5 bundles an older Microsoft C++ runtime.  On Windows, importing Qt
-# first can make PyTorch fail while loading c10.dll (WinError 1114), so load
-# PyTorch before any PyQt5 module.
-import torch
+# Only the legacy detector needs PyTorch. Initialize NumPy before PyTorch's
+# OpenMP runtime, and PyTorch before Qt's C++ runtime, on Windows.
+if "--legacy" in sys.argv:
+    import numpy
+    import torch
 
 
 def allocate_console():
@@ -71,10 +72,15 @@ allocate_console()
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication
-from app.views.main_window import MainWindow
 
 
 def main():
+    if "--legacy" not in sys.argv:
+        from tray_counter.__main__ import main as tray_main
+        sys.exit(tray_main(sys.argv[1:]))
+    sys.argv.remove("--legacy")
+    from app.views.main_window import MainWindow
+
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
 

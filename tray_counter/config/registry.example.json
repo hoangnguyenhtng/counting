@@ -1,0 +1,25 @@
+{
+  "CODE_0001": {
+    "mode": "per_code",
+    "model": "models/CODE_0001.onnx",
+    "conf": 0.5,
+    "conf_low": 0.25,
+    "version": "2026-11-02",
+    "tray_types": ["T03", "T07"],
+    "classes": ["target", "other", "tray"],
+    "tray_mode": "class",
+    "output_format": "yolo_raw"
+  },
+  "CODE_0002": {
+    "mode": "shared",
+    "model": "models/product_detector.onnx",
+    "embedding_model": "models/embedding.onnx",
+    "ref_dir": "reference/CODE_0002",
+    "classes": ["product"],
+    "tray_mode": "contour",
+    "sim_thr": 0.82,
+    "sim_margin": 0.03,
+    "conf": 0.5,
+    "conf_low": 0.25
+  }
+}

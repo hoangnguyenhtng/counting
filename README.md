@@ -1,6 +1,15 @@
 # Fold Tape Detection
 
-Ứng dụng thị giác máy tính dùng để kiểm tra lỗi trong quy trình gắn vinyl/tape. Chương trình nhận trigger từ PLC hoặc thiết bị ngoại vi, chụp ảnh từ camera, chạy mô hình YOLO và trả kết quả `OK`/`NG`.
+Luồng mặc định hiện là **đếm tray theo code từ Excel, nhận trigger từ PLC**, theo thiết kế ngày 02/11/2026. Có quản lý tổng theo code, phát hiện lẫn mã/lowconf, handshake BUSY/DONE/RESULT/HEARTBEAT, đếm lại có lịch sử, lưu SQLite/PNG và xuất báo cáo Excel.
+
+```powershell
+pip install -r requirements.txt
+python main.py
+```
+
+Xem [hướng dẫn đếm tray](tray_counter/README.md) để cấu hình registry/model, Excel, camera, SimPLC và chạy kiểm thử. Cấu hình mới ở `tray_counter/config/settings.yaml`. Hiện dùng SimPLC trong khi chờ chốt giao thức/địa chỉ PLC thật; cần model target/other đã huấn luyện theo code để đếm ảnh sản phẩm.
+
+Các mục dưới đây mô tả **chế độ kiểm tape cũ**, mở bằng `python main.py --legacy`.
 
 ## Chức năng chính
 
@@ -41,7 +50,7 @@ Nếu PowerShell chặn script kích hoạt môi trường, có thể chạy tr�
 ## Chạy chương trình
 
 ```powershell
-python main.py
+python main.py --legacy
 ```
 
 Cấu hình mặc định nằm tại:
@@ -115,7 +124,7 @@ Mật khẩu Teaching có thể được cấu hình khi triển khai bằng bi�
 
 ```powershell
 $env:VPVA_TEACHING_PASSWORD = "mat-khau-cua-ban"
-python main.py
+python main.py --legacy
 ```
 
 Không lưu mật khẩu, token hoặc thông tin nhạy cảm trực tiếp trong repository.

@@ -32,6 +32,8 @@ hiddenimports = [
     'pydantic',
     'pydantic_core',
     'yaml',
+    'openpyxl',
+    'onnxruntime',
     'psutil',
     'GPUtil',
     'colorlog',
@@ -112,6 +114,9 @@ for source_dir in (
     Path('res/Style'),
     Path('res/ModelAI'),
     Path('Settings'),
+    Path('tray_counter/config'),
+    Path('tray_counter/models'),
+    Path('tray_counter/reference'),
 ):
     if source_dir.exists():
         shutil.copytree(
